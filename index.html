@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>3D Model Viewer</title>
+    <style>
+      body {
+        margin: 0;
+      }
+      canvas {
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <button id="screenshotBtn">Take Screenshot</button>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.159.0/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.159.0/examples/jsm/"
+        }
+      }
+    </script>
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.rawgit.com/mrdoob/three.js/master/examples/js/loaders/GLTFLoader.js"></script> -->
+    <script type="module">
+      import * as THREE from 'three';
+      import { GLTFLoader } from 'https://unpkg.com/three@0.159.0/examples/jsm/loaders/GLTFLoader.js';
+      import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+      import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+      import { BokehPass } from 'three/addons/postprocessing/BokehPass.js';
+
+      let scene, camera, renderer, composer;
+
+      function init() {
+        scene = new THREE.Scene();
+
+        renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize(2000, 2000);
+        THREE.ColorManagement.legacyMode = false;
+        renderer.setClearColor(0x00ff00, 1);
+        renderer.outputColorSpace = THREE.SRGBColorSpace;
+        document.body.appendChild(renderer.domElement);
+
+        const light = new THREE.AmbientLight(0xffffff);
+        scene.add(light);
+
+        const loader = new GLTFLoader();
+        loader.load(
+          'testfiles/GLBMOdel.glb',
+          function (gltf) {
+            scene.add(gltf.scene);
+
+            if (gltf.cameras && gltf.cameras.length > 0) {
+              console.log(gltf.cameras[0]);
+
+              camera = gltf.cameras[0];
+              camera.scale.set(1, 1, 1);
+              scene.add(camera);
+            } else {
+              console.error('No camera found in the model.');
+              camera = new THREE.PerspectiveCamera(
+                75,
+                window.innerWidth / window.innerHeight,
+                0.1,
+                1000,
+              );
+              camera.position.z = 2;
+              scene.add(camera);
+            }
+
+            console.log(camera);
+            renderer.render(scene, camera);
+
+            const textureLoader = new THREE.TextureLoader();
+            // const newTexture = textureLoader.load('testfiles/4.png', function (texture) {
+            //   // Swap the texture
+            //   const maxAnisotropy = renderer.capabilities.getMaxAnisotropy();
+            //   texture.colorSpace = THREE.SRGBColorSpace;
+            //   texture.anisotropy = maxAnisotropy;
+            //   texture.generateMipmaps = true;
+            //   texture.minFilter = THREE.LinearMipmapLinearFilter;
+            //   texture.wrapT = THREE.RepeatWrapping;
+            //   texture.repeat.y = -1;
+
+            //   gltf.scene.traverse(function (child) {
+            //     if (child.isMesh) {
+            //       console.log(child.material);
+            //       if (child.material.name === 'Case_Soft_Top') {
+            //         child.material.map = texture; // Set the new texture
+            //         child.material.needsUpdate = true; // Update the material
+            //         child.renderOrder = 1;
+            //       }
+            //     }
+            //   });
+
+            //   //composer = new EffectComposer(renderer);
+            //   //const renderPass = new RenderPass(scene, camera);
+            //   //composer.addPass(renderPass);
+
+            //   // Setup Depth of Field
+            //   //const depthOfFieldPass = new BokehPass(scene, camera, {
+            //   //  focus: 10,
+            //   //  aperture: 0.00002,
+            //   //maxDepth: 10,
+            //   //  maxBlur: 1,
+            //   //  width: 2000,
+            //   //  height: 2000,
+            //   //});
+            //   //depthOfFieldPass.renderToScreen = true;
+            //   //composer.addPass(depthOfFieldPass);
+
+            //   //animate();
+            //   renderer.render(scene, camera);
+            // });
+          },
+          undefined,
+          function (error) {
+            console.error(error);
+          },
+        );
+      }
+
+      /*function takeScreenshot() {
+        // Set the renderer size for the screenshot
+        const originalSize = { width: renderer.width, height: renderer.height };
+        renderer.setSize(2000, 2000); // Set to desired resolution
+
+        // Render the scene to the canvas
+        renderer.render(scene, camera);
+
+        // Get the data URL of the canvas
+        const dataURL = renderer.domElement.toDataURL('image/png');
+
+        // Reset the renderer size back to original
+        renderer.setSize(originalSize.width, originalSize.height);
+
+        // Create a link to download the image
+        const link = document.createElement('a');
+        link.href = dataURL;
+        link.download = 'screenshot.png';
+        link.click();
+      }*/
+
+      function takeScreenshot() {
+        //const originalSize = { width: composer.width, height: composer.height };
+        //composer.setSize(2000, 2000); // Set to desired resolution
+
+        // Render the scene to the composer
+
+        //composer.render();
+
+        // Get the data URL of the composer renderer's canvas
+        //const dataURL = composer.renderer.domElement.toDataURL('image/webp');
+        renderer.render(scene, camera);
+        const dataURL = renderer.domElement.toDataURL('image/webp');
+
+        // Reset the composer size back to original
+        //composer.setSize(originalSize.width, originalSize.height);
+
+        // Create a link to download the image
+        const link = document.createElement('a');
+        link.href = dataURL;
+        link.download = 'test.png';
+        link.click();
+      }
+
+      document
+        .getElementById('screenshotBtn')
+        .addEventListener('click', takeScreenshot);
+
+      function animate() {
+        requestAnimationFrame(animate);
+        renderer.render(scene, camera);
+        //composer.render();
+      }
+
+      window.addEventListener('resize', function () {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+
+      init();
+    </script>
+  </body>
+</html>
